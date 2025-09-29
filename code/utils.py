@@ -6,6 +6,7 @@ def ensure_dir(dir_path):
 
     os.makedirs(dir_path, exist_ok=True)
 
+
 def set_color(log, color, highlight=True):
     color_set = ["black", "red", "green", "yellow", "blue", "pink", "cyan", "white"]
     try:
@@ -20,6 +21,7 @@ def set_color(log, color, highlight=True):
     prev_log += str(index) + "m"
     return prev_log + log + "\033[0m"
 
+
 def get_local_time():
     r"""Get current time
 
@@ -30,6 +32,7 @@ def get_local_time():
     cur = cur.strftime("%b-%d-%Y_%H-%M-%S")
 
     return cur
+
 
 def delete_file(filename):
     if os.path.exists(filename):

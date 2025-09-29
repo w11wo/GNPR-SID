@@ -13,9 +13,9 @@ import heapq
 class Trainer(object):
 
     def __init__(self, args, model, data_num):
-        
-        data_mode = args.data_path.split('/')[2]
-        
+
+        data_mode = args.data_path.split("/")[2]
+
         self.args = args
         self.model = model
         self.logger = logging.getLogger()
@@ -61,36 +61,29 @@ class Trainer(object):
         elif learner.lower() == "sgd":
             optimizer = optim.SGD(params, lr=learning_rate, weight_decay=weight_decay)
         elif learner.lower() == "adagrad":
-            optimizer = optim.Adagrad(
-                params, lr=learning_rate, weight_decay=weight_decay
-            )
+            optimizer = optim.Adagrad(params, lr=learning_rate, weight_decay=weight_decay)
             for state in optimizer.state.values():
                 for k, v in state.items():
                     if torch.is_tensor(v):
                         state[k] = v.to(self.device)
         elif learner.lower() == "rmsprop":
-            optimizer = optim.RMSprop(
-                params, lr=learning_rate, weight_decay=weight_decay
-            )
-        elif learner.lower() == 'adamw':
-            optimizer = optim.AdamW(
-                params, lr=learning_rate, weight_decay=weight_decay
-            )
+            optimizer = optim.RMSprop(params, lr=learning_rate, weight_decay=weight_decay)
+        elif learner.lower() == "adamw":
+            optimizer = optim.AdamW(params, lr=learning_rate, weight_decay=weight_decay)
         else:
-            self.logger.warning(
-                "Received unrecognized optimizer, set default Adam optimizer"
-            )
+            self.logger.warning("Received unrecognized optimizer, set default Adam optimizer")
             optimizer = optim.Adam(params, lr=learning_rate)
         return optimizer
 
     def _get_scheduler(self):
         if self.lr_scheduler_type.lower() == "linear":
-            lr_scheduler = get_linear_schedule_with_warmup(optimizer=self.optimizer,
-                                                           num_warmup_steps=self.warmup_steps,
-                                                           num_training_steps=self.max_steps)
+            lr_scheduler = get_linear_schedule_with_warmup(
+                optimizer=self.optimizer, num_warmup_steps=self.warmup_steps, num_training_steps=self.max_steps
+            )
         else:
-            lr_scheduler = get_constant_schedule_with_warmup(optimizer=self.optimizer,
-                                                             num_warmup_steps=self.warmup_steps)
+            lr_scheduler = get_constant_schedule_with_warmup(
+                optimizer=self.optimizer, num_warmup_steps=self.warmup_steps
+            )
 
         return lr_scheduler
 
@@ -115,7 +108,7 @@ class Trainer(object):
             pids, data = data[0], data[1]
             data = data.to(self.device)
             self.optimizer.zero_grad()
-            out, rq_loss, indices = self.model(data,epoch_idx)
+            out, rq_loss, indices = self.model(data, epoch_idx)
             loss, loss_recon = self.model.compute_loss(out, rq_loss, xs=data)
             self._check_nan(loss)
             loss.backward()
@@ -158,8 +151,11 @@ class Trainer(object):
 
     def _save_checkpoint(self, epoch, collision_rate=1, ckpt_file=None):
 
-        ckpt_path = os.path.join(self.ckpt_dir, ckpt_file) if ckpt_file \
-            else os.path.join(self.ckpt_dir, 'epoch_%d_collision_%.4f_model.pth' % (epoch, collision_rate))
+        ckpt_path = (
+            os.path.join(self.ckpt_dir, ckpt_file)
+            if ckpt_file
+            else os.path.join(self.ckpt_dir, "epoch_%d_collision_%.4f_model.pth" % (epoch, collision_rate))
+        )
         state = {
             "args": self.args,
             "epoch": epoch,
@@ -170,19 +166,14 @@ class Trainer(object):
         }
         torch.save(state, ckpt_path, pickle_protocol=4)
 
-        self.logger.info(
-            set_color("Saving current", "blue") + f": {ckpt_path}"
-        )
+        self.logger.info(set_color("Saving current", "blue") + f": {ckpt_path}")
 
         return ckpt_path
 
     def _generate_train_loss_output(self, epoch_idx, s_time, e_time, loss, recon_loss):
         train_loss_output = (
-                                    set_color("epoch %d training", "green")
-                                    + " ["
-                                    + set_color("time", "blue")
-                                    + ": %.2fs, "
-                            ) % (epoch_idx, e_time - s_time)
+            set_color("epoch %d training", "green") + " [" + set_color("time", "blue") + ": %.2fs, "
+        ) % (epoch_idx, e_time - s_time)
         train_loss_output += set_color("train loss", "blue") + ": %.4f" % loss
         train_loss_output += ", "
         train_loss_output += set_color("reconstruction loss", "blue") + ": %.4f" % recon_loss
@@ -209,29 +200,30 @@ class Trainer(object):
 
                 if train_loss < self.best_loss:
                     self.best_loss = train_loss
-                    self._save_checkpoint(epoch=epoch_idx+1, ckpt_file=self.best_loss_ckpt)
+                    self._save_checkpoint(epoch=epoch_idx + 1, ckpt_file=self.best_loss_ckpt)
 
                 if collision_rate < self.best_collision_rate:
                     self.best_collision_rate = collision_rate
                     cur_eval_step = 0
-                    self._save_checkpoint(epoch_idx+1, collision_rate=collision_rate,
-                                          ckpt_file=self.best_collision_ckpt)
+                    self._save_checkpoint(
+                        epoch_idx + 1, collision_rate=collision_rate, ckpt_file=self.best_collision_ckpt
+                    )
                 else:
                     cur_eval_step += 1
 
                 valid_end_time = time()
                 valid_score_output = (
-                                             set_color("epoch %d evaluating", "green")
-                                             + " ["
-                                             + set_color("time", "blue")
-                                             + ": %.2fs, "
-                                             + set_color("collision_rate", "blue")
-                                             + ": %f]"
-                                     ) % (epoch_idx, valid_end_time - valid_start_time, collision_rate)
+                    set_color("epoch %d evaluating", "green")
+                    + " ["
+                    + set_color("time", "blue")
+                    + ": %.2fs, "
+                    + set_color("collision_rate", "blue")
+                    + ": %f]"
+                ) % (epoch_idx, valid_end_time - valid_start_time, collision_rate)
 
                 self.logger.info(valid_score_output)
                 print(valid_score_output)
-                ckpt_path = self._save_checkpoint(epoch_idx+1, collision_rate=collision_rate)
+                ckpt_path = self._save_checkpoint(epoch_idx + 1, collision_rate=collision_rate)
                 now_save = (-collision_rate, ckpt_path)
                 if len(self.newest_save_queue) < self.save_limit:
                     self.newest_save_queue.append(now_save)

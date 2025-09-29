@@ -7,17 +7,17 @@ from .layers import kmeans, sinkhorn_algorithm
 class VectorQuantizer(nn.Module):
 
     def __init__(
-            self,
-            n_e,
-            e_dim,
-            beta=0.25,
-            kmeans_init=False,
-            kmeans_iters=10,
-            sk_epsilon=0.01,
-            sk_iters=100,
-            use_linear=0,
-            use_sk=False,
-            diversity_loss=0.0
+        self,
+        n_e,
+        e_dim,
+        beta=0.25,
+        kmeans_init=False,
+        kmeans_iters=10,
+        sk_epsilon=0.01,
+        sk_iters=100,
+        use_linear=0,
+        use_sk=False,
+        diversity_loss=0.0,
     ):
         super().__init__()
         self.n_e = n_e
@@ -41,7 +41,7 @@ class VectorQuantizer(nn.Module):
 
         if use_linear == 1:
             self.codebook_projection = torch.nn.Linear(self.e_dim, self.e_dim)
-            torch.nn.init.normal_(self.codebook_projection.weight, std=self.e_dim ** -0.5)
+            torch.nn.init.normal_(self.codebook_projection.weight, std=self.e_dim**-0.5)
 
     def get_codebook(self):
         return self.embedding.weight
@@ -90,10 +90,12 @@ class VectorQuantizer(nn.Module):
             embeddings_weight = self.embedding.weight
 
         # Calculate the L2 Norm between latent and Embedded weights
-        d = torch.sum(latent ** 2, dim=1, keepdim=True) + \
-            torch.sum(embeddings_weight ** 2, dim=1, keepdim=True).t() - \
-            2 * torch.matmul(latent, embeddings_weight.t())
-       
+        d = (
+            torch.sum(latent**2, dim=1, keepdim=True)
+            + torch.sum(embeddings_weight**2, dim=1, keepdim=True).t()
+            - 2 * torch.matmul(latent, embeddings_weight.t())
+        )
+
         indices = torch.argmin(d, dim=-1)
         if self.use_linear == 1:
             x_q = F.embedding(indices, embeddings_weight).view(x.shape)
@@ -110,11 +112,11 @@ class VectorQuantizer(nn.Module):
         commitment_loss = F.mse_loss(x_q.detach(), x)
         codebook_loss = F.mse_loss(x_q, x.detach())
 
-        if epoch_idx >= 1000:        
+        if epoch_idx >= 1000:
             if self.diversity_loss > 0:
                 soft_counts = Q.sum(0)  # [N]
                 mean_soft_count = soft_counts.mean()
-                mean_count_loss = torch.mean((soft_counts - mean_soft_count) ** 2) / (mean_soft_count ** 2 + 1e-5)
+                mean_count_loss = torch.mean((soft_counts - mean_soft_count) ** 2) / (mean_soft_count**2 + 1e-5)
                 # pairwise
                 # pairwise_loss = 0
                 # for i in range(self.n_e):
@@ -125,14 +127,15 @@ class VectorQuantizer(nn.Module):
 
                 diversity_loss = (
                     # 0.1 * (pairwise_loss / self.n_e) +
-                    0.05 * mean_count_loss
+                    0.05
+                    * mean_count_loss
                 )
                 loss = codebook_loss + self.beta * commitment_loss + self.diversity_loss * diversity_loss
             else:
                 loss = codebook_loss + self.beta * commitment_loss
         else:
             loss = codebook_loss + self.beta * commitment_loss
-        
+
         # preserve gradients
         x_q = x + (x_q - x).detach()
 

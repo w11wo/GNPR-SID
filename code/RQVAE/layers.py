@@ -4,6 +4,7 @@ from torch.nn.init import xavier_normal_
 from sklearn.cluster import KMeans
 import torch.nn.init as init
 
+
 class MLPLayers(nn.Module):
 
     def __init__(self, layers, dropout=0.0, activation="relu", bn=False, weight_init="xavier"):
@@ -15,9 +16,7 @@ class MLPLayers(nn.Module):
         self.weight_init = weight_init
 
         mlp_modules = []
-        for idx, (input_size, output_size) in enumerate(
-                zip(self.layers[:-1], self.layers[1:])
-        ):
+        for idx, (input_size, output_size) in enumerate(zip(self.layers[:-1], self.layers[1:])):
             mlp_modules.append(nn.Dropout(p=self.dropout))
             mlp_modules.append(nn.Linear(input_size, output_size))
             if self.use_bn:
@@ -30,17 +29,17 @@ class MLPLayers(nn.Module):
         self.apply(self._initialize_weights)
 
     def _initialize_weights(self, module):
-        
+
         if isinstance(module, nn.Linear):
-            if self.weight_init == 'xavier':
+            if self.weight_init == "xavier":
                 init.xavier_uniform_(module.weight)
-            elif self.weight_init == 'he':
-                init.kaiming_uniform_(module.weight, nonlinearity='relu')
-            elif self.weight_init == 'normal':
+            elif self.weight_init == "he":
+                init.kaiming_uniform_(module.weight, nonlinearity="relu")
+            elif self.weight_init == "normal":
                 init.normal_(module.weight, mean=0.0, std=0.01)
-            elif self.weight_init == 'uniform':
+            elif self.weight_init == "uniform":
                 init.uniform_(module.weight, a=-0.1, b=0.1)
-                
+
             # 初始化偏置为0
             if module.bias is not None:
                 init.zeros_(module.bias)
@@ -66,17 +65,15 @@ def activation_layer(activation_name="relu", emb_dim=None):
     elif issubclass(activation_name, nn.Module):
         activation = activation_name()
     else:
-        raise NotImplementedError(
-            "activation function {} is not implemented".format(activation_name)
-        )
+        raise NotImplementedError("activation function {} is not implemented".format(activation_name))
 
     return activation
 
 
 def kmeans(
-        samples,
-        num_clusters,
-        num_iters=10,
+    samples,
+    num_clusters,
+    num_iters=10,
 ):
     B, dim, dtype, device = samples.shape[0], samples.shape[-1], samples.dtype, samples.device
     x = samples.cpu().detach().numpy()
@@ -91,7 +88,7 @@ def kmeans(
 
 @torch.no_grad()
 def sinkhorn_algorithm(distances, epsilon, sinkhorn_iterations):
-    Q = torch.exp(- distances / epsilon)
+    Q = torch.exp(-distances / epsilon)
 
     B = Q.shape[0]  # number of samples to assign
     K = Q.shape[1]  # how many centroids per block (usually set to 256)

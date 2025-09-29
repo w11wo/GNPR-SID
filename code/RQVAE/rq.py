@@ -7,17 +7,17 @@ from .vq import VectorQuantizer
 class ResidualVectorQuantizer(nn.Module):
 
     def __init__(
-            self,
-            n_e_list,
-            e_dim,
-            sk_epsilons,
-            kmeans_init=False,
-            kmeans_iters=100,
-            sk_iters=100,
-            use_linear=0,
-            use_sk=False,
-            beta=0.25,
-            diversity_loss=0.0,
+        self,
+        n_e_list,
+        e_dim,
+        sk_epsilons,
+        kmeans_init=False,
+        kmeans_iters=100,
+        sk_iters=100,
+        use_linear=0,
+        use_sk=False,
+        beta=0.25,
+        diversity_loss=0.0,
     ):
         super().__init__()
         self.n_e_list = n_e_list
@@ -29,18 +29,23 @@ class ResidualVectorQuantizer(nn.Module):
         self.use_linear = use_linear
         self.use_sk = use_sk
         self.sk_iters = sk_iters
-        self.vq_layers = nn.ModuleList([VectorQuantizer(
-            n_e,
-            e_dim,
-            kmeans_init=self.kmeans_init,
-            kmeans_iters=self.kmeans_iters,
-            sk_epsilon=sk_epsilon,
-            sk_iters=sk_iters,
-            use_linear=use_linear,
-            use_sk=use_sk,
-            beta=beta,
-            diversity_loss=diversity_loss,
-        ) for n_e, sk_epsilon in zip(n_e_list, sk_epsilons)])
+        self.vq_layers = nn.ModuleList(
+            [
+                VectorQuantizer(
+                    n_e,
+                    e_dim,
+                    kmeans_init=self.kmeans_init,
+                    kmeans_iters=self.kmeans_iters,
+                    sk_epsilon=sk_epsilon,
+                    sk_iters=sk_iters,
+                    use_linear=use_linear,
+                    use_sk=use_sk,
+                    beta=beta,
+                    diversity_loss=diversity_loss,
+                )
+                for n_e, sk_epsilon in zip(n_e_list, sk_epsilons)
+            ]
+        )
 
     def get_codebook(self):
         all_codebook = []
