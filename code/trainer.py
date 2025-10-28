@@ -14,7 +14,7 @@ class Trainer(object):
 
     def __init__(self, args, model, data_num):
 
-        data_mode = args.data_path.split("/")[2]
+        data_mode = args.data_path.split("/")[-2]
 
         self.args = args
         self.model = model

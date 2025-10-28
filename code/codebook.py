@@ -14,8 +14,9 @@ from tqdm import tqdm
 from utils import set_color
 
 
-def parse_args(data_mode):
+def parse_args():
     parser = argparse.ArgumentParser(description="Index")
+    parser.add_argument("--city", type=str)
 
     parser.add_argument("--lr", type=float, default=2e-4, help="learning rate")
     parser.add_argument("--epochs", type=int, default=2000, help="number of epochs")
@@ -29,7 +30,7 @@ def parse_args(data_mode):
     parser.add_argument("--learner", type=str, default="AdamW", help="optimizer")
     parser.add_argument("--lr_scheduler_type", type=str, default="constant", help="scheduler")
     parser.add_argument("--warmup_epochs", type=int, default=50, help="warmup epochs")
-    parser.add_argument("--data_path", type=str, default=f"/datasets/{data_mode}/poi_info.csv", help="Input data path.")
+    parser.add_argument("--data_path", type=str, help="Input data path.")
 
     parser.add_argument("--weight_decay", type=float, default=1e-5, help="l2 regularization weight")
     parser.add_argument("--dropout_prob", type=float, default=0.1, help="dropout ratio")
@@ -42,7 +43,7 @@ def parse_args(data_mode):
     parser.add_argument("--sk_iters", type=int, default=50, help="max sinkhorn iters")
     parser.add_argument("--use-liner", type=int, default=0, help="use-liner")
 
-    parser.add_argument("--device", type=str, default="cuda:7", help="gpu or cpu")
+    parser.add_argument("--device", type=str, default="cuda", help="gpu or cpu")
 
     parser.add_argument("--num_emb_list", type=int, nargs="+", default=[64, 64, 64], help="emb num of every vq")
     parser.add_argument("--e_dim", type=int, default=64, help="vq codebook embedding size")
@@ -67,8 +68,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    data_mode = "TKY"
-    args = parse_args(data_mode)
+    args = parse_args()
     print("=================================================")
     print(args)
     print("=================================================")
@@ -84,10 +84,10 @@ if __name__ == "__main__":
 
     best_loss_ckpt = "best_loss_model.pth"
     best_collision_ckpt = "best_collision_model.pth"
-    time_dir = "0"
+    time_dir = args.lamda
     current_dir = os.getcwd()
-    best_loss_ckpt_file = args.ckpt_dir + f"/{data_mode}/{time_dir}/{best_loss_ckpt}"
-    best_collision_ckpt_file = args.ckpt_dir + f"/{data_mode}/{time_dir}/{best_collision_ckpt}"
+    best_loss_ckpt_file = args.ckpt_dir + f"/{args.city}/{time_dir}/{best_loss_ckpt}"
+    best_collision_ckpt_file = args.ckpt_dir + f"/{args.city}/{time_dir}/{best_collision_ckpt}"
 
     checkpoint = torch.load(best_collision_ckpt_file, map_location=args.device, weights_only=False)
 
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         else:
             updated_dict[key] = value
 
-    csv_file = current_dir + f"/datasets/{data_mode}/codebooks_{time_dir}.csv"
+    csv_file = current_dir + f"/data/{args.city}/codebooks_{time_dir}.csv"
 
     os.makedirs(os.path.dirname(csv_file), exist_ok=True)
 

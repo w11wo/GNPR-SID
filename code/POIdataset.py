@@ -13,14 +13,14 @@ current_dir = os.getcwd()
 class EmbDataset(Dataset):
 
     def __init__(self, datapath):
-        data = pd.read_csv(current_dir + datapath)
+        data = pd.read_csv(current_dir + "/" + datapath)
         self.ids = data["Pid"]
         data["Uid"] = data["Uid"].apply(eval)
         data["Time"] = data["Time"].apply(eval)
         data["neighbors"] = data["neighbors"].apply(eval)
         data["forward_neighbors"] = data["forward_neighbors"].apply(eval)
 
-        mode = datapath.split("/")[2]
+        mode = datapath.split("/")[-2]
         time_num = 24
         if mode == "NYC":
             cat_num = 210
@@ -34,6 +34,14 @@ class EmbDataset(Dataset):
             cat_num = 304
             region_num = 958
             neighbor_num = 6593
+        elif mode == "melbourne":
+            cat_num = 129 + 1
+            region_num = 128 + 1
+            neighbor_num = 6901 + 1
+        elif mode == "nyc":
+            cat_num = 105 + 1
+            region_num = 91 + 1
+            neighbor_num = 5099 + 1
         else:
             raise ValueError("Invalid data mode. Choose from 'NYC', 'TKY', or 'CA'.")
 

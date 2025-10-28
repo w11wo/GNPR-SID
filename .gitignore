@@ -163,7 +163,5 @@ cython_debug/
 
 semantic-trails
 notebooks/
-data/*/*.csv
-data/*/graph*
-data/*/preprocessed/
-results/**/user_*.json
+data
+save/
