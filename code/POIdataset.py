@@ -1,3 +1,4 @@
+from pathlib import Path
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
@@ -11,76 +12,38 @@ current_dir = os.getcwd()
 
 
 class EmbDataset(Dataset):
-
     def __init__(self, datapath):
-        data = pd.read_csv(current_dir + "/" + datapath)
-        self.ids = data["Pid"]
-        data["Uid"] = data["Uid"].apply(eval)
-        data["Time"] = data["Time"].apply(eval)
-        data["neighbors"] = data["neighbors"].apply(eval)
-        data["forward_neighbors"] = data["forward_neighbors"].apply(eval)
+        poi_info_path = Path(current_dir) / datapath
+        data_dir = poi_info_path.parent
 
-        mode = datapath.split("/")[-2]
-        time_num = 24
-        if mode == "NYC":
-            cat_num = 210
-            region_num = 92
-            neighbor_num = 1084
-        elif mode == "TKY":
-            cat_num = 191
-            region_num = 60
-            neighbor_num = 2294
-        elif mode == "CA":
-            cat_num = 304
-            region_num = 958
-            neighbor_num = 6593
-        elif mode == "melbourne":
-            cat_num = 129 + 1
-            region_num = 128 + 1
-            neighbor_num = 6901 + 1
-        elif mode == "nyc":
-            cat_num = 105 + 1
-            region_num = 91 + 1
-            neighbor_num = 5099 + 1
-        else:
-            raise ValueError("Invalid data mode. Choose from 'NYC', 'TKY', or 'CA'.")
+        catname_mapping = pd.read_csv(data_dir / "catname_mapping.csv")
+        region_mapping = pd.read_csv(data_dir / "region_mapping.csv")
+        pid_mapping = pd.read_csv(data_dir / "pid_mapping.csv")
 
-        def to_one_hot_fixed_dim(indices, num_classes, scale_factor=1):
-            one_hot = torch.zeros(num_classes, dtype=torch.float32)
-            one_hot[indices] = 1
-            one_hot *= scale_factor
-            return one_hot
+        data = pd.read_csv(poi_info_path)
+        self.ids = data["Pid"].tolist()
+        self.catname_raw = data["Catname"].tolist()
+        self.region_raw = data["Region"].tolist()
+        self.time_raw = data["Time"].apply(eval).tolist()
+        self.uid_raw = data["Uid"].apply(eval).tolist()
 
-        catgories = []
-        for cat in data[f"Catname"]:
-            cat = to_one_hot_fixed_dim(cat, cat_num, scale_factor=1)
-            catgories.append(cat)
-        self.catgorie = catgories
+        self.time_num = 24
+        self.cat_num = len(catname_mapping) + 1
+        self.region_num = len(region_mapping) + 1
+        self.neighbor_num = len(pid_mapping) + 1
 
-        regions = []
-        for region in data[f"Region"]:
-            region = to_one_hot_fixed_dim(region, region_num, scale_factor=1)
-            regions.append(region)
-        self.regions = regions
-
-        times = []
-        for time in data[f"Time"]:
-            # if len(time) > 10:
-            #     time = time[:10]
-            time = to_one_hot_fixed_dim(time, time_num, scale_factor=1)
-            times.append(time)
-        self.times = times
-
-        neighbors = []
-        for neighbor in data[f"Uid"]:
-            # if len(neighbor) > 10:
-            #     neighbor = neighbor[:10]
-            neighbor = to_one_hot_fixed_dim(neighbor, neighbor_num, scale_factor=1)
-            neighbors.append(neighbor)
-        self.neighbors = neighbors
+    @staticmethod
+    def _to_one_hot(indices, num_classes):
+        one_hot = torch.zeros(num_classes, dtype=torch.float32)
+        one_hot[indices] = 1
+        return one_hot
 
     def __len__(self):
         return len(self.ids)
 
     def __getitem__(self, idx):
-        return self.ids[idx], torch.cat([self.catgorie[idx], self.regions[idx], self.times[idx], self.neighbors[idx]])
+        cat = self._to_one_hot(self.catname_raw[idx], self.cat_num)
+        region = self._to_one_hot(self.region_raw[idx], self.region_num)
+        time = self._to_one_hot(self.time_raw[idx], self.time_num)
+        neighbor = self._to_one_hot(self.uid_raw[idx], self.neighbor_num)
+        return self.ids[idx], torch.cat([cat, region, time, neighbor])

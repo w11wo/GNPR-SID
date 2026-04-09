@@ -1,10 +1,10 @@
-from collections import Counter, defaultdict
-from argparse import ArgumentParser
-from pathlib import Path
 import csv
+from argparse import ArgumentParser
+from collections import Counter, defaultdict
+from pathlib import Path
 
-from openlocationcode import openlocationcode as olc
 import pandas as pd
+from openlocationcode import openlocationcode as olc
 
 
 def parse_args():
