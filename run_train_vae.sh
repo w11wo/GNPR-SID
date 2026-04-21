@@ -1,4 +1,4 @@
-for city in melbourne new_york sao_paulo; do
+for city in bandung beijing istanbul jakarta kuwait_city melbourne moscow new_york palembang petaling_jaya sao_paulo shanghai sydney tangerang tokyo; do
     python src/preprocess_massive_steps.py --city $city
 
     python code/train_rqvae.py \
