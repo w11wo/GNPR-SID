@@ -1,4 +1,4 @@
-for city in Melbourne New-York Sao-Paulo; do
+for city in Bandung Beijing Istanbul Jakarta Kuwait-City Melbourne Moscow New-York Palembang Petaling-Jaya Sao-Paulo Shanghai Sydney Tangerang Tokyo; do
     city_key=$(echo "$city" | tr '[:upper:]' '[:lower:]' | tr '-' '_')
     python src/eval_next_poi.py \
         --model_checkpoint models/Llama-3.1-8B-Massive-STEPS-$city \
